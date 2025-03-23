@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Remontada Interactive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        #character-selection {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .character-card {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            background-color: white;
+        }
+        
+        .character-card:hover {
+            border-color: #2196F3;
+        }
+        
+        .character-card.selected {
+            border-color: #2196F3;
+            background-color: #e3f2fd;
+        }
+        
+        #match-container {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .team {
+            text-align: center;
+        }
+        
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        #game-feed {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .event {
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #f2f2f2;
+            border-left: 3px solid #ff9800;
+            font-weight: bold;
+        }
+        
+        .reaction {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        /* Styles spécifiques pour chaque personnage */
+        .reaction.cauvin {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196F3;
+        }
+        
+        .reaction.jeanphi {
+            background-color: #f3e5f5;
+            border-left: 3px solid #9c27b0;
+        }
+        
+        .reaction.etienne {
+            background-color: #e8f5e9;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .reaction.renaud {
+            background-color: #fff3e0;
+            border-left: 3px solid #ff9800;
+        }
+        
+        .reaction.bastien {
+            background-color: #e0f7fa;
+            border-left: 3px solid #00bcd4;
+        }
+        
+        .reaction.axel {
+            background-color: #fce4ec;
+            border-left: 3px solid #e91e63;
+        }
+        
+        .reaction.dimitri {
+            background-color: #fffde7;
+            border-left: 3px solid #ffeb3b;
+        }
+        
+        /* Style pour les noms des personnages dans les bulles */
+        .character-name {
+            font-weight: bold;
+        }
+        
+        .character-name.cauvin { color: #2196F3; }
+        .character-name.jeanphi { color: #9c27b0; }
+        .character-name.etienne { color: #4caf50; }
+        .character-name.renaud { color: #ff9800; }
+        .character-name.bastien { color: #00bcd4; }
+        .character-name.axel { color: #e91e63; }
+        .character-name.dimitri { color: #ffeb3b; }
+        
+        #options-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .option-button {
+            padding: 10px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .option-button:hover {
+            background-color: #0b7dda;
+        }
+        
+        #next-event-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #next-event-button:hover {
+            background-color: #e68a00;
+        }
+        
+        #start-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #start-button:hover {
+            background-color: #45a049;
+        }
+        
+        #restart-button {
+            display: none;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #E91E63;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #restart-button:hover {
+            background-color: #C2185B;
+        }
+        
+        #start-button:disabled, #next-event-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .hide {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>La Remontada Interactive</h1>
+    
+    <div id="character-selection">
+        <div class="character-card" data-character="cauvin">
+            <h3>Cauvin</h3>
+        </div>
+        <div class="character-card" data-character="jeanphi">
+            <h3>Jean-Phi</h3>
+        </div>
+        <div class="character-card" data-character="etienne">
+            <h3>Étienne</h3>
+        </div>
+        <div class="character-card" data-character="renaud">
+            <h3>Renaud</h3>
+        </div>
+        <div class="character-card" data-character="bastien">
+            <h3>Bastien</h3>
+        </div>
+        <div class="character-card" data-character="axel">
+            <h3>Axel</h3>
+        </div>
+        <div class="character-card" data-character="dimitri">
+            <h3>Dimitri</h3>
+        </div>
+    </div>
+    
+    <button id="start-button" disabled>Commencer le match</button>
+    <button id="restart-button">Recommencer le jeu</button>
+    
+    <div id="match-container">
+        <div class="scoreboard">
+            <div class="team">
+                <h3>Barcelona</h3>
+                <div class="score" id="barca-score">0</div>
+            </div>
+            <div class="team">
+                <h3>PSG</h3>
+                <div class="score" id="psg-score">0</div>
+            </div>
+        </div>
+        
+        <h3>Déroulement du match</h3>
+        <div id="game-feed"></div>
+        
+        <h3>Vos options</h3>
+        <div id="options-container"></div>
+        
+        <button id="next-event-button" class="hide">Action suivante</button>
+    </div>
+    
+    <script>
+        // Données du match
+        const matchEvents = [
+            { time: "3'", description: "But de Suarez ! Le Barça ouvre le score.", type: "goal", team: "Barcelona" },
+            { time: "15'", description: "Cavani rate une occasion en or pour le PSG.", type: "missed" },
+            { time: "40'", description: "But contre son camp de Kurzawa ! Le Barça mène 2-0.", type: "goal", team: "Barcelona" },
+            { time: "50'", description: "Penalty pour le Barça ! Neymar est fauché dans la surface.", type: "penalty" },
+            { time: "50'", description: "Messi transforme le penalty ! 3-0 pour le Barça.", type: "goal", team: "Barcelona" },
+            { time: "62'", description: "But de Cavani ! Le PSG réduit l'écart à 3-1.", type: "goal", team: "PSG" },
+            { time: "65'", description: "Occasion manquée par Messi !", type: "missed" },
+            { time: "75'", description: "Carton jaune pour Piqué suite à une faute sur Di Maria.", type: "card" },
+            { time: "88'", description: "But de Neymar ! Superbe coup franc ! 4-1 pour le Barça.", type: "goal", team: "Barcelona" },
+            { time: "90+1'", description: "Penalty pour le Barça après une faute sur Suarez !", type: "penalty" },
+            { time: "90+1'", description: "Neymar transforme le penalty ! 5-1 pour le Barça.", type: "goal", team: "Barcelona" },
+            { time: "90+5'", description: "BUT DE SERGI ROBERTO ! INCROYABLE ! 6-1 POUR LE BARÇA !", type: "goal", team: "Barcelona" },
+            { time: "FIN", description: "C'est terminé ! Le Barça élimine le PSG avec un score cumulé de 6-5 !", type: "end" }
+        ];
+        
+        // Réactions des personnages
+        const characterReactions = {
+            cauvin: [
+                "Tranquille, on a 4 buts d'avance. Impossible de perdre.",
+                "Pas grave, c'est juste un but. On mène toujours 4-1 au cumulé.",
+                "Euh... c'est pas inquiétant. On mène toujours au score cumulé.",
+                "Ok, ça commence à être serré mais on tient bon.",
+                "NON NON NON! C'est pas possible! L'arbitre est acheté!",
+                "Je vais vomir. Je déteste le foot. Je vais brûler mon maillot.",
+                "C'est pas possible... C'est un cauchemar...",
+                "*pleurs incontrôlables* Je... je... *sanglots*"
+            ],
+            others: [
+                "Cauvin, tu vas pleurer ce soir!",
+                "Ça sent la remontada!",
+                "Cauvin flipette!",
+                "La remontada est en marche!",
+                "Cauvin, t'es un peu pâle non?",
+                "CAUVIN FLIPETTE! T'as les mains qui tremblent!",
+                "Cauvin, respire par le nez!",
+                "Appelle un médecin pour Cauvin!",
+                "REMONTADAAAAAAA! CAUVIN FLIPETTE FOR EVER!",
+                "Historique! Cauvin est en PLS!"
+            ]
+        };
+        
+        // Options interactives
+        const playerOptions = {
+            cauvin: [
+                "Rassurer son équipe",
+                "Insulter l'arbitre",
+                "Changer de chaîne",
+                "Prétendre que tout va bien",
+                "Boire pour oublier"
+            ],
+            others: [
+                "Chambrer Cauvin gentiment",
+                "Se moquer méchamment",
+                "Imiter Cauvin qui pleure",
+                "Filmer Cauvin pour les réseaux",
+                "Offrir un mouchoir à Cauvin"
+            ]
+        };
+        
+        // Réponses aux options
+        const optionResponses = {
+            cauvin: [
+                "On va s'en sortir les gars, c'est juste un passage à vide!",
+                "ARBITRE VENDU! C'EST SCANDALEUX!",
+                "J'en peux plus, je zappe sur Top Chef...",
+                "Ça va, je reste calme. Tout est sous contrôle. *se mord les lèvres*",
+                "*boit une gorgée* J'ai besoin d'alcool pour supporter ça."
+            ],
+            others: [
+                "Alors Cauvin, toujours aussi confiant?",
+                "CAUVIN FLIPETTE! CAUVIN FLIPETTE! CAUVIN FLIPETTE!",
+                "*imite Cauvin* 'Ouiiiin, mon PSG! Ouiiiin!'",
+                "Souris Cauvin! Je filme ta réaction pour Instagram!",
+                "Tiens Cauvin, un mouchoir pour tes larmes!"
+            ]
+        };
+        
+        // Réactions aléatoires des autres après chaque choix du joueur
+        const randomReactions = {
+            cauvin: [
+                "Jean-Phi: T'es en train de perdre tes moyens, mon pauvre Cauvin!",
+                "Étienne: Respire profondément, Cauvin, ça va aller...",
+                "Renaud: Quelqu'un peut apporter une bassine à Cauvin?",
+                "Bastien: Cauvin, tu veux qu'on appelle une ambulance?",
+                "Axel: Je n'ai jamais vu Cauvin dans cet état!",
+                "Dimitri: Cauvin, tu devrais voir ta tête!",
+                "Jean-Phi: Il va faire une crise cardiaque le Cauvin!",
+                "Étienne: Cauvin est en train de fondre comme neige au soleil!",
+                "Renaud: Je sens que Cauvin va nous faire une syncope!",
+                "Bastien: Cauvin, ton visage est plus blanc que le maillot du PSG!",
+                "Axel: Il va falloir hospitaliser Cauvin après le match!",
+                "Dimitri: Je crois que Cauvin est en train de regretter d'être venu!"
+            ],
+            others: [
+                "Jean-Phi: Regarde l'état de Cauvin, c'est magique!",
+                "Étienne: Cauvin est au bord des larmes, quel spectacle!",
+                "Renaud: Cauvin, ça va? Tu as l'air tout pâle!",
+                "Bastien: Je n'ai jamais vu Cauvin aussi abattu!",
+                "Axel: Cauvin est en train de vivre son pire cauchemar!",
+                "Dimitri: La tête de Cauvin vaut son pesant d'or!",
+                "Jean-Phi: Il va pleurer, je le sens!",
+                "Étienne: Cauvin est complètement décomposé!",
+                "Renaud: Je pense que Cauvin a besoin d'un verre... ou de dix!",
+                "Bastien: Cauvin est en train de nous faire une crise existentielle!",
+                "Axel: Je n'oublierai jamais la tête de Cauvin ce soir!",
+                "Dimitri: Quelqu'un peut vérifier si Cauvin respire encore?"
+            ]
+        };
+        
+        // Mappage des personnages à leurs classes CSS
+        const characterClasses = {
+            'cauvin': 'cauvin',
+            'jeanphi': 'jeanphi',
+            'etienne': 'etienne',
+            'renaud': 'renaud',
+            'bastien': 'bastien',
+            'axel': 'axel',
+            'dimitri': 'dimitri'
+        };
+        
+        // Variables du jeu
+        let selectedCharacter = null;
+        let currentEventIndex = -1;
+        let barcaScore = 0;
+        let psgScore = 0;
+        let waitingForPlayerAction = false;
+        
+        // Éléments du DOM
+        const characterCards = document.querySelectorAll('.character-card');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const matchContainer = document.getElementById('match-container');
+        const barcaScoreElement = document.getElementById('barca-score');
+        const psgScoreElement = document.getElementById('psg-score');
+        const gameFeed = document.getElementById('game-feed');
+        const optionsContainer = document.getElementById('options-container');
+        const nextEventButton = document.getElementById('next-event-button');
+        
+        // Gestion de la sélection des personnages
+        characterCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Désélectionner tous les personnages
+                characterCards.forEach(c => c.classList.remove('selected'));
+                
+                // Sélectionner le nouveau personnage
+                card.classList.add('selected');
+                selectedCharacter = card.getAttribute('data-character');
+                
+                // Activer le bouton de démarrage
+                startButton.disabled = false;
+            });
+        });
+        
+        // Démarrer le match
+        startButton.addEventListener('click', () => {
+            if (selectedCharacter) {
+                document.getElementById('character-selection').style.display = 'none';
+                startButton.style.display = 'none';
+                matchContainer.style.display = 'block';
+                restartButton.style.display = 'block';
+                
+                // Initialiser le match
+                initializeMatch();
+            }
+        });
+        
+        // Redémarrer le jeu
+        restartButton.addEventListener('click', () => {
+            // Réinitialiser les variables du jeu
+            currentEventIndex = -1;
+            barcaScore = 0;
+            psgScore = 0;
+            waitingForPlayerAction = false;
+            
+            // Réinitialiser l'interface
+            document.getElementById('character-selection').style.display = 'flex';
+            startButton.style.display = 'block';
+            startButton.disabled = true;
+            matchContainer.style.display = 'none';
+            restartButton.style.display = 'none';
+            gameFeed.innerHTML = '';
+            
+            // Désélectionner tous les personnages
+            characterCards.forEach(c => c.classList.remove('selected'));
+            selectedCharacter = null;
+            
+            // Réinitialiser le bouton "Action suivante"
+            nextEventButton.textContent = "Action suivante";
+            nextEventButton.disabled = false;
+            nextEventButton.classList.add('hide');
+        });
+        
+        // Gérer le clic sur le bouton "Action suivante"
+        nextEventButton.addEventListener('click', () => {
+            if (currentEventIndex < matchEvents.length - 1) {
+                // Afficher le prochain événement
+                progressMatch();
+                
+                // Cacher le bouton "Action suivante"
+                nextEventButton.classList.add('hide');
+            } else {
+                // Fin du match
+                nextEventButton.textContent = "Match terminé";
+                nextEventButton.disabled = true;
+            }
+        });
+        
+        // Initialiser le match
+        function initializeMatch() {
+            // Réinitialiser les scores
+            barcaScore = 0;
+            psgScore = 0;
+            updateScores();
+            
+            // Afficher le message initial
+            addEvent("0'", "Le match commence! PSG mène 4-0 au score cumulé après le match aller.");
+            
+            // Afficher une réaction initiale des autres joueurs seulement si le joueur n'est pas Cauvin
+            if (selectedCharacter !== 'cauvin') {
+                addReaction('others', characterReactions.others[0]);
+                addReaction('cauvin', characterReactions.cauvin[0]);
+            }
+            
+            // Afficher les options
+            updateOptions();
+            
+            // Afficher le bouton "Action suivante"
+            nextEventButton.classList.remove('hide');
+        }
+        
+        // Faire progresser le match
+        function progressMatch() {
+            currentEventIndex++;
+            
+            if (currentEventIndex < matchEvents.length) {
+                const event = matchEvents[currentEventIndex];
+                addEvent(event.time, event.description);
+                
+                // Mettre à jour le score
+                if (event.type === 'goal') {
+                    if (event.team === 'Barcelona') {
+                        barcaScore++;
+                    } else if (event.team === 'PSG') {
+                        psgScore++;
+                    }
+                    updateScores();
+                }
+                
+                // Ajouter des réactions des autres joueurs (mais pas du joueur sélectionné)
+                addNPCReaction();
+                
+                // Activer le bouton "Action suivante" seulement après que le joueur ait choisi une option
+                waitingForPlayerAction = true;
+                
+                // Si c'est le dernier événement, mettre à jour le texte du bouton
+                if (currentEventIndex === matchEvents.length - 1) {
+                    nextEventButton.textContent = "Terminer le match";
+                }
+            }
+        }
+        
+        // Mettre à jour les scores
+        function updateScores() {
+            barcaScoreElement.textContent = barcaScore;
+            psgScoreElement.textContent = psgScore;
+        }
+        
+        // Ajouter un événement
+        function addEvent(time, description) {
+            const eventElement = document.createElement('div');
+            eventElement.className = 'event';
+            eventElement.innerHTML = `<strong>${time}</strong> - ${description}`;
+            gameFeed.appendChild(eventElement);
+            gameFeed.scrollTop = gameFeed.scrollHeight;
+        }
+        
+        // Extraire le nom du personnage d'une chaîne de réaction
+        function extractCharacterFromReaction(text) {
+            const characterMap = {
+                'Jean-Phi': 'jeanphi',
+                'Étienne': 'etienne',
+                'Renaud': 'renaud',
+                'Bastien': 'bastien',
+                'Axel': 'axel',
+                'Dimitri': 'dimitri'
+            };
+            
+            for (const [name, id] of Object.entries(characterMap)) {
+                if (text.startsWith(name + ':')) {
+                    return id;
+                }
+            }
+            
+            return null;
+        }
+        
+        // Ajouter les réactions des personnages non joueurs
+        function addNPCReaction() {
+            let cauvinIndex = Math.min(barcaScore, characterReactions.cauvin.length - 1);
+            let othersIndex = Math.min(barcaScore, characterReactions.others.length - 1);
+            
+            // Si le joueur sélectionné n'est pas Cauvin, on affiche la réaction de Cauvin
+            if (selectedCharacter !== 'cauvin' && barcaScore > 0) {
+                addReaction('cauvin', characterReactions.cauvin[cauvinIndex]);
+            }
+            
+            // Si le joueur sélectionné est Cauvin, on affiche la réaction des autres
+            if (selectedCharacter === 'cauvin' && barcaScore > 0) {
+                // Choisir un personnage aléatoire pour réagir
+                const otherCharacters = ['jeanphi', 'etienne', 'renaud', 'bastien', 'axel', 'dimitri'];
+                const randomCharacter = otherCharacters[Math.floor(Math.random() * otherCharacters.length)];
+                
+                addReaction(randomCharacter, characterReactions.others[othersIndex]);
+            }
+            
+            // Mettre à jour les options
+            updateOptions();
+        }
+        
+        // Fonction pour obtenir un élément aléatoire d'un tableau
+        function getRandomElement(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+        
+        // Ajouter une réaction
+        function addReaction(character, text) {
+            const reactionElement = document.createElement('div');
+            
+            // Mappage des ID de personnages à leurs noms complets
+            const characterNames = {
+                'cauvin': 'Cauvin',
+                'jeanphi': 'Jean-Phi',
+                'etienne': 'Étienne',
+                'renaud': 'Renaud',
+                'bastien': 'Bastien',
+                'axel': 'Axel',
+                'dimitri': 'Dimitri'
+            };
+            
+            // Si le texte inclut déjà un préfixe de personnage (comme dans randomReactions)
+            const extractedCharacter = extractCharacterFromReaction(text);
+            if (extractedCharacter) {
+                reactionElement.className = `reaction ${extractedCharacter}`;
+                const parts = text.split(':');
+                const name = parts[0];
+                const content = parts.slice(1).join(':').trim();
+                reactionElement.innerHTML = `<span class="character-name ${extractedCharacter}">${name}:</span> ${content}`;
+            } else {
+                const characterClass = characterClasses[character] || character;
+                reactionElement.className = `reaction ${characterClass}`;
+                
+                // Déterminer le nom à afficher
+                let displayName;
+                if (character === 'others') {
+                    // Pour 'others', on choisit un personnage aléatoire qui n'est pas le joueur sélectionné
+                    const otherCharacters = Object.keys(characterNames).filter(c => c !== 'cauvin' && c !== selectedCharacter);
+                    const randomChar = otherCharacters[Math.floor(Math.random() * otherCharacters.length)];
+                    displayName = characterNames[randomChar];
+                    reactionElement.className = `reaction ${randomChar}`;
+                    character = randomChar; // Pour l'affichage coloré
+                } else {
+                    displayName = characterNames[character] || character;
+                }
+                
+                reactionElement.innerHTML = `<span class="character-name ${character}">${displayName}:</span> ${text}`;
+            }
+            
+            gameFeed.appendChild(reactionElement);
+            gameFeed.scrollTop = gameFeed.scrollHeight;
+        }
+        
+        // Mettre à jour les options
+        function updateOptions() {
+            optionsContainer.innerHTML = '';
+            
+            const options = selectedCharacter === 'cauvin' ? playerOptions.cauvin : playerOptions.others;
+            
+            options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button';
+                button.textContent = option;
+                button.addEventListener('click', () => handleOptionClick(index));
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        // Gérer le clic sur une option
+        function handleOptionClick(index) {
+            const responses = selectedCharacter === 'cauvin' ? optionResponses.cauvin : optionResponses.others;
+            
+            // Ajouter la réaction du joueur
+            addReaction(selectedCharacter, responses[index]);
+            
+            // Ajouter une réaction aléatoire d'un autre personnage (75% de chance)
+            if (Math.random() < 0.75) {
+                const reactionType = selectedCharacter === 'cauvin' ? 'others' : 'cauvin';
+                const randomReactionText = getRandomElement(randomReactions[reactionType]);
+                
+                // Extraire le personnage de la réaction aléatoire
+                const characterId = extractCharacterFromReaction(randomReactionText);
+                
+                // Ajouter la réaction avec un léger délai pour simuler une réponse
+                setTimeout(() => {
+                    const reactionElement = document.createElement('div');
+                    reactionElement.className = `reaction ${characterId || reactionType}`;
+                    
+                    if (characterId) {
+                        // Format: "Character: Message"
+                        const parts = randomReactionText.split(':');
+                        const name = parts[0];
+                        const content = parts.slice(1).join(':').trim();
+                        reactionElement.innerHTML = `<span class="character-name ${characterId}">${name}:</span> ${content}`;
+                    } else {
+                        reactionElement.innerHTML = randomReactionText;
+                    }
+                    
+                    gameFeed.appendChild(reactionElement);
+                    gameFeed.scrollTop = gameFeed.scrollHeight;
+                }, 500);
+            }
+            
+            // Afficher le bouton "Action suivante" après que le joueur ait choisi une option
+            if (waitingForPlayerAction) {
+                setTimeout(() => {
+                    nextEventButton.classList.remove('hide');
+                    waitingForPlayerAction = false;
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
